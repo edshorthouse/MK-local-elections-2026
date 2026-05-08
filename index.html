@@ -17,7 +17,7 @@
             <meta name="viewport" content="width=device-width,
                 initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
             <style>
-                #map_aa35f5da171b3824e82f674f8992ada4 {
+                #map_9a8ce0bb019678d994ef3d4e2b94a511 {
                     position: relative;
                     width: 100.0%;
                     height: 100.0%;
@@ -55,6 +55,87 @@
     
     <div id="map-legend" style="position:fixed;bottom:30px;left:30px;z-index:1000;background:white;padding:12px 16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.25);font-family:Arial,sans-serif;font-size:13px;line-height:1.8"><div style="font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px;">2026 Local Elections</div><b style="font-size:14px">Winning Party</b><br><span style="display:inline-block;width:14px;height:14px;background:#FAA61A;border-radius:3px;margin-right:6px;vertical-align:middle"></span>Liberal Democrats<br><span style="display:inline-block;width:14px;height:14px;background:#E4003B;border-radius:3px;margin-right:6px;vertical-align:middle"></span>Labour<br><span style="display:inline-block;width:14px;height:14px;background:#12B6CF;border-radius:3px;margin-right:6px;vertical-align:middle"></span>Reform UK<br><span style="display:inline-block;width:14px;height:14px;background:#0087DC;border-radius:3px;margin-right:6px;vertical-align:middle"></span>Conservative<br><span style="display:inline-block;width:14px;height:14px;background:#02A95B;border-radius:3px;margin-right:6px;vertical-align:middle"></span>Green Party<br><span style="display:inline-block;width:14px;height:14px;background:#888888;border-radius:3px;margin-right:6px;vertical-align:middle"></span>Independent<br></div>
     
+<style>
+@media (max-width: 768px) {
+  /* Map fills full screen minus tab bar */
+  .folium-map {
+    height: calc(100vh - 58px) !important;
+  }
+
+  /* Panels: full-screen page, hidden by default, shown by JS */
+  #right-panels {
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 58px !important;
+    width: 100% !important;
+    height: calc(100vh - 58px) !important;
+    flex-direction: column !important;
+    padding: 8px !important;
+    gap: 8px !important;
+    overflow-y: auto !important;
+    background: #f0f2f5 !important;
+    display: none !important;
+  }
+
+  /* Same 3:2 ratio as desktop */
+  #chart-panel { flex: 3 !important; min-height: 0 !important; }
+  #cllr-panel  { flex: 2 !important; min-height: 0 !important; }
+
+  /* Legend above tab bar */
+  #map-legend {
+    bottom: 60px !important;
+    font-size: 11px !important;
+    padding: 8px 12px !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Align dropdown to the right on mobile */
+  #party-dropdown-wrapper {
+    left: auto !important;
+    right: 10px !important;
+    transform: none !important;
+  }
+
+  /* Smaller dropdown */
+  #party-select {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+    min-width: 150px !important;
+  }
+
+  /* Show tab bar on mobile */
+  #mobile-tabs { display: flex !important; }
+}
+</style>
+    
+<!-- Mobile tab bar (hidden on desktop via CSS) -->
+<div id="mobile-tabs" style="
+    display:none; position:fixed; bottom:0; left:0; right:0;
+    height:58px; background:white;
+    border-top:1px solid #e8e8e8;
+    box-shadow:0 -2px 12px rgba(0,0,0,0.08);
+    z-index:3000; font-family:Arial,sans-serif;
+    align-items:center; justify-content:center; padding:6px 12px;">
+  <div style="display:flex;background:#f0f2f5;border-radius:10px;
+              padding:3px;width:100%;gap:3px;">
+    <button id="tab-map" onclick="showMobileTab('map')" style="
+        flex:1;border:none;border-radius:8px;
+        background:#0087DC;color:white;
+        font-size:14px;font-weight:600;cursor:pointer;
+        padding:9px 0;transition:background 0.2s,color 0.2s;">
+      Map
+    </button>
+    <button id="tab-charts" onclick="showMobileTab('charts')" style="
+        flex:1;border:none;border-radius:8px;
+        background:transparent;color:#777;
+        font-size:14px;font-weight:600;cursor:pointer;
+        padding:9px 0;transition:background 0.2s,color 0.2s;">
+      Charts
+    </button>
+  </div>
+</div>
+
 <!-- Loading overlay — hidden once map is positioned -->
 <div id="loading-screen" style="
     position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;
@@ -72,7 +153,7 @@
 </div>
 
 <!-- Party dropdown -->
-<div style="position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:2000;">
+<div id="party-dropdown-wrapper" style="position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:2000;">
   <select id="party-select" onchange="onPartyChange(this.value)"
     style="font-family:Arial,sans-serif;font-size:13px;font-weight:bold;
            padding:8px 14px;border-radius:8px;border:1px solid #ccc;
@@ -370,9 +451,10 @@
     document.getElementById("cllr-subtitle").textContent = "Councillors elected by ward";
 
     // Smaller font for vote chart in party mode (21 ward bars need more space)
-    voteChart.options.scales.y.ticks.font.size = 11.5;
-    voteChart.options.scales.x.ticks.font.size = 11.5;
-    voteChart.options.plugins.datalabels.font.size = 11.5;
+    var partyVoteFs = window.innerWidth <= 768 ? 10 : 11.5;
+    voteChart.options.scales.y.ticks.font.size = partyVoteFs;
+    voteChart.options.scales.x.ticks.font.size = partyVoteFs;
+    voteChart.options.plugins.datalabels.font.size = partyVoteFs;
 
     updateBothCharts(d1, true, VOTE_MAX, d2, false, maxSeats);
   }
@@ -457,16 +539,64 @@
           selectedLayer = layer;
           layer.setStyle({weight:3, color:"#000", fillOpacity:0.85});
           updateAllPartyCharts(ward);
+          // On mobile: show tooltip briefly then switch to Charts tab.
+          if (window.innerWidth <= 768) {
+            tooltip.setLatLng(e.latlng).setContent(tip).openOn(leafMap);
+            setTimeout(function() { window.showMobileTab("charts"); }, 600);
+          }
         });
       }
     }).addTo(leafMap);
 
-    // Fit all wards into the available viewport, accounting for the right panels.
-    leafMap.fitBounds(gjLayer.getBounds(), {
-      paddingTopLeft:     [20, 70],
-      paddingBottomRight: [540, 20],
-      animate: false
+    var mobile = window.innerWidth <= 768;
+
+    function fitMapBounds() {
+      var m2 = window.innerWidth <= 768;
+      leafMap.fitBounds(gjLayer.getBounds(), {
+        paddingTopLeft:     [10, m2 ? 50 : 70],
+        paddingBottomRight: [m2 ? 10 : 540, m2 ? 68 : 20],
+        animate: false
+      });
+    }
+
+    // Let CSS reshape the container first, then fit.
+    setTimeout(function() {
+      leafMap.invalidateSize();
+      fitMapBounds();
+    }, mobile ? 200 : 0);
+
+    // Re-fit on orientation change.
+    window.addEventListener("orientationchange", function() {
+      setTimeout(function() { leafMap.invalidateSize(); fitMapBounds(); }, 400);
     });
+
+    // ── Mobile tab switching ──
+    window.showMobileTab = function(tab) {
+      var panels = document.getElementById("right-panels");
+      var tabMap = document.getElementById("tab-map");
+      var tabChr = document.getElementById("tab-charts");
+      var legend = document.getElementById("map-legend");
+      var zoomCtrl = document.querySelector(".leaflet-control-zoom");
+      if (tab === "map") {
+        panels.style.setProperty("display", "none", "important");
+        tabMap.style.background = "#0087DC"; tabMap.style.color = "white";
+        tabChr.style.background = "#f0f0f0"; tabChr.style.color = "#555";
+        if (legend && !currentParty) legend.style.display = "block";
+        if (zoomCtrl) zoomCtrl.style.display = "";
+        setTimeout(function() { leafMap.invalidateSize(); fitMapBounds(); }, 50);
+      } else {
+        panels.style.setProperty("display", "flex", "important");
+        tabMap.style.background = "#f0f0f0"; tabMap.style.color = "#555";
+        tabChr.style.background = "#0087DC"; tabChr.style.color = "white";
+        if (legend) legend.style.display = "none";
+        if (zoomCtrl) zoomCtrl.style.display = "none";
+        // Redraw charts — they won't render correctly if hidden during init.
+        setTimeout(function() {
+          if (voteChart) voteChart.resize();
+          if (cllrChart) cllrChart.resize();
+        }, 50);
+      }
+    };
 
     // Fade out and remove the loading screen now that the map is positioned.
     var ls = document.getElementById("loading-screen");
@@ -574,14 +704,14 @@
 })();
 </script>
     
-            <div class="folium-map" id="map_aa35f5da171b3824e82f674f8992ada4" ></div>
+            <div class="folium-map" id="map_9a8ce0bb019678d994ef3d4e2b94a511" ></div>
         
 </body>
 <script>
     
     
-            var map_aa35f5da171b3824e82f674f8992ada4 = L.map(
-                "map_aa35f5da171b3824e82f674f8992ada4",
+            var map_9a8ce0bb019678d994ef3d4e2b94a511 = L.map(
+                "map_9a8ce0bb019678d994ef3d4e2b94a511",
                 {
                     center: [52.08384653306189, -0.7335283270725312],
                     crs: L.CRS.EPSG3857,
@@ -598,7 +728,7 @@
 
         
     
-            var tile_layer_578c42c970c81568dd3dcf75d4f2d5f1 = L.tileLayer(
+            var tile_layer_8d3c145cf357aef61efc8629d093ec20 = L.tileLayer(
                 "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
                 {
   "minZoom": 0,
@@ -615,7 +745,7 @@
             );
         
     
-            tile_layer_578c42c970c81568dd3dcf75d4f2d5f1.addTo(map_aa35f5da171b3824e82f674f8992ada4);
+            tile_layer_8d3c145cf357aef61efc8629d093ec20.addTo(map_9a8ce0bb019678d994ef3d4e2b94a511);
         
 </script>
 </html>
