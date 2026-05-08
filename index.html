@@ -17,7 +17,7 @@
             <meta name="viewport" content="width=device-width,
                 initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
             <style>
-                #map_2e4e597408cc100cadf32c7ee6d9d067 {
+                #map_79d14dd5a1e670991401e21319289a77 {
                     position: relative;
                     width: 100.0%;
                     height: 100.0%;
@@ -300,6 +300,27 @@
 
   var voteChart, cllrChart, gjLayer, selectedLayer;
   var currentParty = null;
+
+  // ── Mobile panel height helper ──
+  // all-party: both panels the same height (avail * 0.6), scroll is fine
+  // party:     panel 1 slightly shorter (avail * 0.5), panel 2 same
+  function setMobilePanelHeights(mode) {
+    if (window.innerWidth > 768) return;
+    var cp    = document.getElementById("chart-panel");
+    var pp    = document.getElementById("cllr-panel");
+    var avail = window.innerHeight - 52 - 58 - 24; // filter + tabs + padding/gap
+    var h1 = mode === "party" ? Math.round(avail * 0.5) : Math.round(avail * 0.6);
+    var h2 = Math.round(avail * 0.6); // panel 2 always same as all-party panel 1
+    if (cp) { cp.style.setProperty("height", h1+"px", "important");
+              cp.style.setProperty("min-height", h1+"px", "important"); }
+    if (pp) { pp.style.setProperty("height", h2+"px", "important");
+              pp.style.setProperty("min-height", h2+"px", "important"); }
+    // Resize charts so they re-render into the new container dimensions
+    setTimeout(function() {
+      if (voteChart) voteChart.resize();
+      if (cllrChart) cllrChart.resize();
+    }, 50);
+  }
 
   // ── Chart helpers ──
   function buildFromObj(dataObj) {
@@ -650,27 +671,6 @@
       setTimeout(function() { leafMap.invalidateSize(); fitMapBounds(); }, 400);
     });
 
-    // ── Mobile panel height helper ──
-    // all-party: fit both panels on screen at 3:2 (60/40)
-    // party:     panel 1 shorter (45%), panel 2 unchanged (40%)
-    function setMobilePanelHeights(mode) {
-      if (window.innerWidth > 768) return;
-      var cp    = document.getElementById("chart-panel");
-      var pp    = document.getElementById("cllr-panel");
-      var avail = window.innerHeight - 52 - 58 - 24; // filter + tabs + padding/gap
-      if (mode === "all-party") {
-        var h1 = Math.round(avail * 0.6);
-        var h2 = Math.round(avail * 0.4);
-      } else {
-        var h1 = Math.round(avail * 0.45);
-        var h2 = Math.round(avail * 0.4);
-      }
-      if (cp) { cp.style.setProperty("height", h1+"px", "important");
-                cp.style.setProperty("min-height", h1+"px", "important"); }
-      if (pp) { pp.style.setProperty("height", h2+"px", "important");
-                pp.style.setProperty("min-height", h2+"px", "important"); }
-    }
-
     // ── Mobile tab switching ──
     window.showMobileTab = function(tab) {
       var panels = document.getElementById("right-panels");
@@ -811,14 +811,14 @@
 })();
 </script>
     
-            <div class="folium-map" id="map_2e4e597408cc100cadf32c7ee6d9d067" ></div>
+            <div class="folium-map" id="map_79d14dd5a1e670991401e21319289a77" ></div>
         
 </body>
 <script>
     
     
-            var map_2e4e597408cc100cadf32c7ee6d9d067 = L.map(
-                "map_2e4e597408cc100cadf32c7ee6d9d067",
+            var map_79d14dd5a1e670991401e21319289a77 = L.map(
+                "map_79d14dd5a1e670991401e21319289a77",
                 {
                     center: [52.08384653306189, -0.7335283270725312],
                     crs: L.CRS.EPSG3857,
@@ -835,7 +835,7 @@
 
         
     
-            var tile_layer_6361b5030150eec2470055744e778246 = L.tileLayer(
+            var tile_layer_2a7687624528c0780b34b1bd8a7a7c72 = L.tileLayer(
                 "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
                 {
   "minZoom": 0,
@@ -852,7 +852,7 @@
             );
         
     
-            tile_layer_6361b5030150eec2470055744e778246.addTo(map_2e4e597408cc100cadf32c7ee6d9d067);
+            tile_layer_2a7687624528c0780b34b1bd8a7a7c72.addTo(map_79d14dd5a1e670991401e21319289a77);
         
 </script>
 </html>
