@@ -309,7 +309,7 @@
     var cp    = document.getElementById("chart-panel");
     var pp    = document.getElementById("cllr-panel");
     var avail = window.innerHeight - 52 - 58 - 24; // filter + tabs + padding/gap
-    var h1 = mode === "party" ? Math.round(avail * 0.88) : Math.round(avail * 0.68);
+    var h1 = mode === "party" ? Math.round(avail * 0.96) : Math.round(avail * 0.68);
     var h2 = mode === "party" ? Math.round(avail * 0.6) : Math.round(avail * 0.5);
     if (cp) { cp.style.setProperty("height", h1+"px", "important");
               cp.style.setProperty("min-height", h1+"px", "important"); }
