@@ -17,7 +17,7 @@
             <meta name="viewport" content="width=device-width,
                 initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
             <style>
-                #map_6dd52f52de71bdf99f6a659601d583dc {
+                #map_2e4e597408cc100cadf32c7ee6d9d067 {
                     position: relative;
                     width: 100.0%;
                     height: 100.0%;
@@ -62,15 +62,15 @@
     height: calc(100vh - 58px) !important;
   }
 
-  /* Panels: full-screen scrollable page, hidden by default */
+  /* Panels: scrollable page below filter bar, hidden by default */
   #right-panels {
-    top: 0 !important;
+    top: 52px !important;
     left: 0 !important;
     right: 0 !important;
     bottom: 58px !important;
     width: 100% !important;
     height: auto !important;
-    max-height: calc(100vh - 58px) !important;
+    max-height: none !important;
     flex-direction: column !important;
     padding: 8px 8px 16px !important;
     gap: 8px !important;
@@ -80,16 +80,10 @@
     display: none !important;
   }
 
-  /* Fixed heights so panels don't flex-squish — allows scrolling */
-  #chart-panel {
+  /* Panel heights set dynamically by JS per mode */
+  #chart-panel, #cllr-panel {
     flex: none !important;
-    height: 620px !important;
-    min-height: 620px !important;
-  }
-  #cllr-panel {
-    flex: none !important;
-    height: 340px !important;
-    min-height: 340px !important;
+    min-height: 0 !important;
   }
 
   /* Chart containers fill remaining space inside each panel */
@@ -449,6 +443,8 @@
     var ws = document.getElementById("ward-select");
     if (ws) ws.style.display = "";
 
+    setMobilePanelHeights("all-party");
+
     var d1 = buildFromObj(DISTRICT_DATA);
     var d2 = buildFromObj(DISTRICT_CLLR);
 
@@ -488,6 +484,8 @@
     // Hide ward select in filter bar during party mode
     var ws = document.getElementById("ward-select");
     if (ws) ws.style.display = "none";
+
+    setMobilePanelHeights("party");
 
     // Legend: vote share intensity scale
     document.getElementById("map-legend").style.display = "none";
@@ -652,6 +650,27 @@
       setTimeout(function() { leafMap.invalidateSize(); fitMapBounds(); }, 400);
     });
 
+    // ── Mobile panel height helper ──
+    // all-party: fit both panels on screen at 3:2 (60/40)
+    // party:     panel 1 shorter (45%), panel 2 unchanged (40%)
+    function setMobilePanelHeights(mode) {
+      if (window.innerWidth > 768) return;
+      var cp    = document.getElementById("chart-panel");
+      var pp    = document.getElementById("cllr-panel");
+      var avail = window.innerHeight - 52 - 58 - 24; // filter + tabs + padding/gap
+      if (mode === "all-party") {
+        var h1 = Math.round(avail * 0.6);
+        var h2 = Math.round(avail * 0.4);
+      } else {
+        var h1 = Math.round(avail * 0.45);
+        var h2 = Math.round(avail * 0.4);
+      }
+      if (cp) { cp.style.setProperty("height", h1+"px", "important");
+                cp.style.setProperty("min-height", h1+"px", "important"); }
+      if (pp) { pp.style.setProperty("height", h2+"px", "important");
+                pp.style.setProperty("min-height", h2+"px", "important"); }
+    }
+
     // ── Mobile tab switching ──
     window.showMobileTab = function(tab) {
       var panels = document.getElementById("right-panels");
@@ -672,13 +691,13 @@
         setTimeout(function() { leafMap.invalidateSize(); fitMapBounds(); }, 50);
       } else {
         panels.style.setProperty("display", "flex", "important");
-        panels.style.top = "52px";
         if (filterBar) filterBar.style.setProperty("display", "flex", "important");
         if (partyWrap) partyWrap.style.display = "none";
         tabMap.style.background = "#f0f0f0"; tabMap.style.color = "#555";
         tabChr.style.background = "#0087DC"; tabChr.style.color = "white";
         if (legend) legend.style.display = "none";
         if (zoomCtrl) zoomCtrl.style.display = "none";
+        setMobilePanelHeights(currentParty ? "party" : "all-party");
         setTimeout(function() {
           if (voteChart) voteChart.resize();
           if (cllrChart) cllrChart.resize();
@@ -792,14 +811,14 @@
 })();
 </script>
     
-            <div class="folium-map" id="map_6dd52f52de71bdf99f6a659601d583dc" ></div>
+            <div class="folium-map" id="map_2e4e597408cc100cadf32c7ee6d9d067" ></div>
         
 </body>
 <script>
     
     
-            var map_6dd52f52de71bdf99f6a659601d583dc = L.map(
-                "map_6dd52f52de71bdf99f6a659601d583dc",
+            var map_2e4e597408cc100cadf32c7ee6d9d067 = L.map(
+                "map_2e4e597408cc100cadf32c7ee6d9d067",
                 {
                     center: [52.08384653306189, -0.7335283270725312],
                     crs: L.CRS.EPSG3857,
@@ -816,7 +835,7 @@
 
         
     
-            var tile_layer_08317ef6ed879cee29e3a122614b46dd = L.tileLayer(
+            var tile_layer_6361b5030150eec2470055744e778246 = L.tileLayer(
                 "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
                 {
   "minZoom": 0,
@@ -833,7 +852,7 @@
             );
         
     
-            tile_layer_08317ef6ed879cee29e3a122614b46dd.addTo(map_6dd52f52de71bdf99f6a659601d583dc);
+            tile_layer_6361b5030150eec2470055744e778246.addTo(map_2e4e597408cc100cadf32c7ee6d9d067);
         
 </script>
 </html>
