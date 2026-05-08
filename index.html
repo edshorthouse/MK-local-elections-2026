@@ -17,7 +17,7 @@
             <meta name="viewport" content="width=device-width,
                 initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
             <style>
-                #map_5f84b3262cd3e42f0974483c45d3c4be {
+                #map_c67bd9b25b3fadcce6381886846df511 {
                     position: relative;
                     width: 100.0%;
                     height: 100.0%;
@@ -718,8 +718,11 @@
     // Per-ward text width overrides (px) for wards that need a tighter column.
     var WARD_MAX_W = {
       "Bletchley Park & Fenny Stratford": 48,
-      "Bletchley West":                   48,
-      "Danesborough":                     78
+      "Bletchley West":                   48
+    };
+    // Per-ward polygon-width ratio overrides (default 0.65)
+    var WARD_W_RATIO = {
+      "Danesborough": 0.88
     };
 
     function refreshLabels() {
@@ -745,10 +748,11 @@
       // Step 2: hide wards whose smaller dimension is below threshold
       entries.forEach(function(e) { if (e.minD < 58) e.visible = false; });
 
-      // Step 3: collision detection — use per-ward cap where defined.
+      // Step 3: collision detection — use per-ward cap/ratio where defined.
       entries.forEach(function(e) {
         var hardCap = WARD_MAX_W[e.lbl.name] || 65;
-        e.tw = Math.min(e.pxW * 0.65, e.pxH * 1.8, hardCap);
+        var wRatio  = WARD_W_RATIO[e.lbl.name] || 0.65;
+        e.tw = Math.min(e.pxW * wRatio, e.pxH * 1.8, hardCap);
         var lines = Math.ceil((e.lbl.name.length * chW) / e.tw);
         e.th = Math.min(lines, 3) * lhPx;
       });
@@ -770,7 +774,8 @@
       labelMarkers = entries.map(function(e) {
         if (!e.visible) return null;
         var hardCap = WARD_MAX_W[e.lbl.name] || 65;
-        var textW = Math.round(Math.min(e.pxW * 0.65, e.pxH * 1.8, hardCap));
+        var wRatio  = WARD_W_RATIO[e.lbl.name] || 0.65;
+        var textW = Math.round(Math.min(e.pxW * wRatio, e.pxH * 1.8, hardCap));
         var icon = L.divIcon({
           html: '<div style="'
               + 'width:'  + Math.round(e.pxW) + 'px;'
@@ -812,14 +817,14 @@
 })();
 </script>
     
-            <div class="folium-map" id="map_5f84b3262cd3e42f0974483c45d3c4be" ></div>
+            <div class="folium-map" id="map_c67bd9b25b3fadcce6381886846df511" ></div>
         
 </body>
 <script>
     
     
-            var map_5f84b3262cd3e42f0974483c45d3c4be = L.map(
-                "map_5f84b3262cd3e42f0974483c45d3c4be",
+            var map_c67bd9b25b3fadcce6381886846df511 = L.map(
+                "map_c67bd9b25b3fadcce6381886846df511",
                 {
                     center: [52.08384653306189, -0.7335283270725312],
                     crs: L.CRS.EPSG3857,
@@ -836,7 +841,7 @@
 
         
     
-            var tile_layer_d55d2b95ede1903155f81fbe820a0c88 = L.tileLayer(
+            var tile_layer_b8b4303cd3b0390b82af6c88c4c0a471 = L.tileLayer(
                 "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
                 {
   "minZoom": 0,
@@ -853,7 +858,7 @@
             );
         
     
-            tile_layer_d55d2b95ede1903155f81fbe820a0c88.addTo(map_5f84b3262cd3e42f0974483c45d3c4be);
+            tile_layer_b8b4303cd3b0390b82af6c88c4c0a471.addTo(map_c67bd9b25b3fadcce6381886846df511);
         
 </script>
 </html>
