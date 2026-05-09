@@ -17,7 +17,7 @@
             <meta name="viewport" content="width=device-width,
                 initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
             <style>
-                #map_c67bd9b25b3fadcce6381886846df511 {
+                #map_38c444df6265ca64853f6a36f1667d93 {
                     position: relative;
                     width: 100.0%;
                     height: 100.0%;
@@ -93,12 +93,35 @@
     height: auto !important;
   }
 
-  /* Legend above tab bar */
+  /* Legend above tab bar — hidden by default on mobile */
   #map-legend {
-    bottom: 60px !important;
+    bottom: 66px !important;
+    left: 10px !important;
     font-size: 11px !important;
     padding: 8px 12px !important;
     line-height: 1.6 !important;
+    display: none !important;
+  }
+
+  /* Legend toggle button — mobile map tab only */
+  #legend-toggle-btn {
+    display: flex !important;
+    position: fixed;
+    bottom: 66px;
+    left: 10px;
+    z-index: 1500;
+    align-items: center;
+    gap: 5px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    cursor: pointer;
   }
 
   /* Align party dropdown to right on mobile map view */
@@ -120,6 +143,12 @@
 }
 </style>
     
+<!-- Mobile legend toggle button (hidden on desktop via CSS) -->
+<button id="legend-toggle-btn" style="display:none;" onclick="toggleMobileLegend()">
+  <span id="legend-toggle-dot" style="width:10px;height:10px;border-radius:2px;background:#555;display:inline-block;"></span>
+  <span id="legend-toggle-label">Legend</span>
+</button>
+
 <!-- Mobile tab bar (hidden on desktop via CSS) -->
 <div id="mobile-tabs" style="
     display:none; position:fixed; bottom:0; left:0; right:0;
@@ -464,6 +493,14 @@
     var ws = document.getElementById("ward-select");
     if (ws) ws.style.display = "";
 
+    // Restore legend toggle button (only on map tab)
+    if (window.innerWidth <= 768) {
+      var panels = document.getElementById("right-panels");
+      var onMapTab = panels && panels.style.display === "none";
+      var tb = document.getElementById("legend-toggle-btn");
+      if (tb) tb.style.setProperty("display", onMapTab ? "flex" : "none", "important");
+    }
+
     setMobilePanelHeights("all-party");
 
     var d1 = buildFromObj(DISTRICT_DATA);
@@ -505,6 +542,10 @@
     // Hide ward select in filter bar during party mode
     var ws = document.getElementById("ward-select");
     if (ws) ws.style.display = "none";
+
+    // Hide legend toggle button in party mode
+    var tb = document.getElementById("legend-toggle-btn");
+    if (tb) tb.style.setProperty("display", "none", "important");
 
     setMobilePanelHeights("party");
 
@@ -592,6 +633,64 @@
 
   window.resetChart = function() { updateAllPartyCharts(null); };
 
+  // ── Mobile legend toggle ──
+  var mobileLegendOpen = false;
+  window.toggleMobileLegend = function() {
+    var legend = document.getElementById("map-legend");
+    var dot    = document.getElementById("legend-toggle-dot");
+    var lbl    = document.getElementById("legend-toggle-label");
+    if (!legend) return;
+    mobileLegendOpen = !mobileLegendOpen;
+    legend.style.setProperty("display", mobileLegendOpen ? "block" : "none", "important");
+    lbl.textContent = mobileLegendOpen ? "Hide legend" : "Legend";
+    // Colour the dot to indicate open state
+    dot.style.background = mobileLegendOpen ? "#0087DC" : "#555";
+  };
+
+  // ── Party-specific mobile tooltip ──
+  function buildPartyTooltip(ward, party) {
+    var colour   = PARTY_COLOURS[party] || "#aaa";
+    var wardVotes = WARD_DATA[ward] || {};
+
+    // This party's vote % in the ward
+    var partyPct = wardVotes[party] !== undefined ? wardVotes[party] : 0;
+
+    // Most popular party by vote % in the ward
+    var topParty = null, topPct = -1;
+    PARTY_ORDER.forEach(function(p) {
+      if (wardVotes[p] !== undefined && wardVotes[p] > topPct) {
+        topPct = wardVotes[p]; topParty = p;
+      }
+    });
+
+    var html =
+      "<div style='font-family:Arial,sans-serif;min-width:200px;max-width:300px'>"
+      + "<div style='font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.05em;"
+      +   "text-transform:uppercase;margin-bottom:3px'>2026 Local Elections</div>"
+      + "<div style='font-size:15px;font-weight:bold;border-bottom:3px solid " + colour
+      +   ";padding-bottom:4px;margin-bottom:10px'>" + ward + "</div>"
+      + "<div style='margin-bottom:8px'>"
+      +   "<div style='font-size:11px;color:#888;margin-bottom:2px'>" + party + " vote share</div>"
+      +   "<div style='font-size:22px;font-weight:bold;color:" + colour + "'>"
+      +     partyPct.toFixed(1) + "%</div>"
+      + "</div>";
+
+    if (topParty) {
+      var topColour = PARTY_COLOURS[topParty] || "#aaa";
+      var isSame = topParty === party;
+      html +=
+        "<div style='font-size:11px;color:#555;border-top:1px solid #eee;padding-top:7px'>"
+        + "Most popular: "
+        + "<span style='color:" + topColour + ";font-weight:bold'>" + topParty + "</span>"
+        + " &mdash; " + topPct.toFixed(1) + "%"
+        + (isSame ? " <span style='color:#888'>(this party)</span>" : "")
+        + "</div>";
+    }
+
+    html += "</div>";
+    return html;
+  }
+
   // ── Leaflet map init ──
   function findLeafletMap() {
     var keys = Object.keys(window);
@@ -634,13 +733,21 @@
           leafMap.closePopup(tooltip);
         });
         layer.on("click", function(e) {
-          if (currentParty) return;
           L.DomEvent.stopPropagation(e);
+          if (currentParty) {
+            // Party mode: mobile only — show party-specific tooltip
+            if (window.innerWidth <= 768) {
+              tooltip.setLatLng(e.latlng)
+                     .setContent(buildPartyTooltip(ward, currentParty))
+                     .openOn(leafMap);
+            }
+            return;
+          }
           if (selectedLayer && selectedLayer !== layer) gjLayer.resetStyle(selectedLayer);
           selectedLayer = layer;
           layer.setStyle({weight:3, color:"#000", fillOpacity:0.85});
           if (window.innerWidth <= 768) {
-            // Mobile: tooltip only — charts controlled by ward dropdown
+            // Mobile all-party: tooltip only — charts controlled by ward dropdown
             tooltip.setLatLng(e.latlng).setContent(tip).openOn(leafMap);
           } else {
             updateAllPartyCharts(ward);
@@ -680,22 +787,29 @@
       var zoomCtrl   = document.querySelector(".leaflet-control-zoom");
       var filterBar  = document.getElementById("mobile-filter-bar");
       var partyWrap  = document.getElementById("party-dropdown-wrapper");
+      var toggleBtn  = document.getElementById("legend-toggle-btn");
+      var toggleDot  = document.getElementById("legend-toggle-dot");
+      var toggleLbl  = document.getElementById("legend-toggle-label");
       if (tab === "map") {
         panels.style.setProperty("display", "none", "important");
         if (filterBar) filterBar.style.setProperty("display", "none", "important");
         if (partyWrap) partyWrap.style.display = "";
         tabMap.style.background = "#0087DC"; tabMap.style.color = "white";
         tabChr.style.background = "#f0f0f0"; tabChr.style.color = "#555";
-        if (legend && !currentParty) legend.style.display = "block";
+        // Show toggle button only in all-party mode (legend is party-coloured)
+        if (toggleBtn) toggleBtn.style.setProperty("display", currentParty ? "none" : "flex", "important");
+        // Keep legend in its current open/closed state
+        if (legend) legend.style.setProperty("display", mobileLegendOpen && !currentParty ? "block" : "none", "important");
         if (zoomCtrl) zoomCtrl.style.display = "";
         setTimeout(function() { leafMap.invalidateSize(); fitMapBounds(); }, 50);
       } else {
         panels.style.setProperty("display", "flex", "important");
         if (filterBar) filterBar.style.setProperty("display", "flex", "important");
         if (partyWrap) partyWrap.style.display = "none";
+        if (toggleBtn) toggleBtn.style.setProperty("display", "none", "important");
         tabMap.style.background = "#f0f0f0"; tabMap.style.color = "#555";
         tabChr.style.background = "#0087DC"; tabChr.style.color = "white";
-        if (legend) legend.style.display = "none";
+        if (legend) legend.style.setProperty("display", "none", "important");
         if (zoomCtrl) zoomCtrl.style.display = "none";
         setMobilePanelHeights(currentParty ? "party" : "all-party");
         setTimeout(function() {
@@ -817,14 +931,14 @@
 })();
 </script>
     
-            <div class="folium-map" id="map_c67bd9b25b3fadcce6381886846df511" ></div>
+            <div class="folium-map" id="map_38c444df6265ca64853f6a36f1667d93" ></div>
         
 </body>
 <script>
     
     
-            var map_c67bd9b25b3fadcce6381886846df511 = L.map(
-                "map_c67bd9b25b3fadcce6381886846df511",
+            var map_38c444df6265ca64853f6a36f1667d93 = L.map(
+                "map_38c444df6265ca64853f6a36f1667d93",
                 {
                     center: [52.08384653306189, -0.7335283270725312],
                     crs: L.CRS.EPSG3857,
@@ -841,7 +955,7 @@
 
         
     
-            var tile_layer_b8b4303cd3b0390b82af6c88c4c0a471 = L.tileLayer(
+            var tile_layer_03db18e15acf1fb7b8d72a517387a265 = L.tileLayer(
                 "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
                 {
   "minZoom": 0,
@@ -858,7 +972,7 @@
             );
         
     
-            tile_layer_b8b4303cd3b0390b82af6c88c4c0a471.addTo(map_c67bd9b25b3fadcce6381886846df511);
+            tile_layer_03db18e15acf1fb7b8d72a517387a265.addTo(map_38c444df6265ca64853f6a36f1667d93);
         
 </script>
 </html>
