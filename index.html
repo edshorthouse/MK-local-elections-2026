@@ -17,7 +17,7 @@
             <meta name="viewport" content="width=device-width,
                 initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
             <style>
-                #map_38c444df6265ca64853f6a36f1667d93 {
+                #map_fdb9ee8599c234e73b89cb3057b2cbe8 {
                     position: relative;
                     width: 100.0%;
                     height: 100.0%;
@@ -93,9 +93,9 @@
     height: auto !important;
   }
 
-  /* Legend above tab bar — hidden by default on mobile */
+  /* Legend above toggle button on mobile */
   #map-legend {
-    bottom: 66px !important;
+    bottom: 110px !important;
     left: 10px !important;
     font-size: 11px !important;
     padding: 8px 12px !important;
@@ -722,6 +722,8 @@
         var tip  = feature.properties.tooltip;
 
         layer.on("mouseover", function(e) {
+          // On mobile in party mode, suppress mouseover — click handles it cleanly
+          if (currentParty && window.innerWidth <= 768) return;
           if (!currentParty) layer.setStyle({weight:3, color:"#000", fillOpacity:0.85});
           tooltip.setLatLng(e.latlng).setContent(tip).openOn(leafMap);
         });
@@ -931,14 +933,14 @@
 })();
 </script>
     
-            <div class="folium-map" id="map_38c444df6265ca64853f6a36f1667d93" ></div>
+            <div class="folium-map" id="map_fdb9ee8599c234e73b89cb3057b2cbe8" ></div>
         
 </body>
 <script>
     
     
-            var map_38c444df6265ca64853f6a36f1667d93 = L.map(
-                "map_38c444df6265ca64853f6a36f1667d93",
+            var map_fdb9ee8599c234e73b89cb3057b2cbe8 = L.map(
+                "map_fdb9ee8599c234e73b89cb3057b2cbe8",
                 {
                     center: [52.08384653306189, -0.7335283270725312],
                     crs: L.CRS.EPSG3857,
@@ -955,7 +957,7 @@
 
         
     
-            var tile_layer_03db18e15acf1fb7b8d72a517387a265 = L.tileLayer(
+            var tile_layer_4474603e705c9ac141b6e9a7f05eceff = L.tileLayer(
                 "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
                 {
   "minZoom": 0,
@@ -972,7 +974,7 @@
             );
         
     
-            tile_layer_03db18e15acf1fb7b8d72a517387a265.addTo(map_38c444df6265ca64853f6a36f1667d93);
+            tile_layer_4474603e705c9ac141b6e9a7f05eceff.addTo(map_fdb9ee8599c234e73b89cb3057b2cbe8);
         
 </script>
 </html>
